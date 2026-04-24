@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>광고 대시보드 – 당일실적</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand:#E8132A; --brand-h:#c90f22; --brand-lt:#fff0f2;
+    --bg:#f4f5f7; --surface:#fff; --bd:#e2e5ea;
+    --text:#1a1d23; --sub:#6b7280; --muted:#9ca3af;
+    --sh:0 1px 4px rgba(0,0,0,.07); --sh2:0 6px 24px rgba(0,0,0,.12);
+    --fix-bg:#f0f4ff; --fix-bd:#c7d7f5;
+  }
+  body { font-family:'Pretendard',-apple-system,sans-serif; background:var(--bg); color:var(--text); font-size:13px; }
+
+  /* ── 헤더 ── */
+  .topbar { background:#fff; border-bottom:1px solid var(--bd); height:52px; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:200; box-shadow:var(--sh); }
+  .tb-left { display:flex; align-items:center; gap:12px; }
+  .tb-logo { color:var(--brand); font-size:20px; font-weight:800; }
+  .tb-title { font-size:15px; font-weight:700; border-left:2px solid var(--brand); padding-left:12px; }
+  .tb-right { display:flex; align-items:center; gap:10px; }
+  .tb-meta { font-size:12px; color:var(--sub); background:var(--bg); padding:4px 12px; border-radius:20px; display:flex; align-items:center; gap:6px; }
+  .tb-meta strong { color:var(--text); font-weight:600; }
+  .btn-excel { display:flex; align-items:center; gap:5px; background:#fff; border:1px solid var(--bd); color:var(--text); font-size:12px; font-weight:500; padding:6px 12px; border-radius:6px; cursor:pointer; }
+  .btn-excel:hover { background:var(--bg); }
+  .tb-user { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--sub); }
+  .tb-user .avatar { width:30px; height:30px; border-radius:50%; background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center; }
+
+  .main { padding:14px 24px; }
+
+  /* ── 필터 패널 ── */
+  .filter-panel { background:#fff; border:1px solid var(--bd); border-radius:10px; box-shadow:var(--sh); margin-bottom:12px; overflow:hidden; }
+  .row-inputs { display:flex; align-items:stretch; border-bottom:1px solid var(--bd); }
+  .sec-lbl { width:52px; min-width:52px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; background:#fafbfc; border-right:1px solid var(--bd); padding:6px 4px; text-align:center; gap:3px; }
+  .input-fields { flex:1; display:flex; align-items:stretch; min-width:0; overflow-x:auto; }
+  .fc { padding:6px 11px; border-right:1px solid var(--bd); display:flex; flex-direction:column; justify-content:center; gap:2px; min-width:0; flex-shrink:0; }
+  .fc:last-child { border-right:none; }
+  .fc-lbl { font-size:9px; font-weight:700; color:var(--muted); white-space:nowrap; display:flex; align-items:center; gap:3px; }
+  .fi { background:#fff; border:1px solid var(--bd); border-radius:5px; outline:none; font-family:inherit; font-size:13px; font-weight:500; color:var(--text); width:100%; padding:4px 8px; transition:border-color .15s; }
+  .fi:focus { border-color:var(--brand); }
+  .fi::placeholder { color:var(--muted); font-weight:400; font-size:12px; }
+  .sw { position:relative; }
+  .fs { appearance:none; background:transparent; border:none; outline:none; font-family:inherit; font-size:13px; font-weight:500; color:var(--text); width:100%; padding-right:14px; cursor:pointer; }
+  .sa { position:absolute; right:0; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--muted); }
+  .rw { display:flex; align-items:center; gap:4px; }
+  .ri { flex:1; background:#f4f5f7; border:1px solid var(--bd); border-radius:4px; padding:3px 5px; font-size:11px; font-family:inherit; color:var(--text); outline:none; min-width:0; transition:border-color .15s; }
+  .ri:focus { border-color:var(--brand); background:#fff; }
+  .ri::placeholder { color:var(--muted); }
+  .rs { color:var(--muted); font-size:11px; flex-shrink:0; }
+
+  /* 토글 태그 행 */
+  .row-tags { display:flex; align-items:stretch; border-bottom:1px solid var(--bd); }
+  .tag-sec-lbl { width:52px; min-width:52px; display:flex; align-items:center; justify-content:center; background:#fafbfc; border-right:1px solid var(--bd); padding:6px 4px; color:var(--muted); }
+  .tag-body { flex:1; display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:7px 12px; }
+  .tag-gl { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; margin-right:2px; }
+  .tog { display:inline-flex; align-items:center; padding:4px 11px; border-radius:20px; font-size:11px; font-weight:500; background:var(--bg); border:1px solid var(--bd); color:var(--sub); cursor:pointer; transition:all .15s; user-select:none; white-space:nowrap; }
+  .tog:hover { border-color:#b0b6bf; color:var(--text); }
+  .tog.on { background:var(--brand-lt); border-color:var(--brand); color:var(--brand); font-weight:700; }
+  .tog.on::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--brand); margin-right:5px; }
+  .tag-actions { display:flex; align-items:center; padding:7px 11px; border-left:1px solid var(--bd); flex-shrink:0; }
+  .btn-save { display:flex; align-items:center; gap:4px; background:none; border:1px solid var(--bd); border-radius:20px; font-family:inherit; font-size:11px; font-weight:600; color:var(--sub); padding:4px 11px; cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .btn-save:hover { border-color:var(--brand); color:var(--brand); background:var(--brand-lt); }
+
+  /* 저장 필터 행 */
+  .row-saved { display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:6px 12px 6px 14px; background:#fafbfc; }
+  .sv-lbl { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+  .sv-count { font-size:9px; color:var(--muted); }
+  .ls-badge { display:inline-flex; align-items:center; gap:4px; background:#f0f9ff; border:1px solid #bae6fd; color:#0369a1; font-size:9px; font-weight:600; padding:2px 7px; border-radius:20px; }
+  .sv-chip { position:relative; display:inline-flex; align-items:center; border-radius:20px; font-size:11px; font-weight:500; background:#fff; border:1px solid var(--bd); color:var(--sub); cursor:pointer; transition:all .15s; white-space:nowrap; overflow:visible; }
+  .sv-chip-name { padding:4px 8px 4px 12px; }
+  .sv-chip:hover { border-color:var(--brand); color:var(--brand); background:var(--brand-lt); }
+  .sv-chip.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .sv-del { display:flex; align-items:center; justify-content:center; width:0; overflow:hidden; opacity:0; font-size:10px; font-weight:700; color:inherit; transition:width .15s,opacity .15s; cursor:pointer; flex-shrink:0; background:transparent; border:none; padding:0; }
+  .sv-chip:hover .sv-del { width:18px; opacity:1; padding-right:6px; }
+  .sv-tip { display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 7px); background:#1a1d23; color:#fff; font-size:11px; padding:8px 12px; border-radius:8px; white-space:nowrap; z-index:600; pointer-events:none; line-height:1.7; min-width:160px; text-align:left; }
+  .sv-tip::after { content:''; position:absolute; left:50%; transform:translateX(-50%); top:100%; border:5px solid transparent; border-top-color:#1a1d23; }
+  .sv-chip:hover .sv-tip { display:block; }
+  .tip { position:relative; display:inline-flex; align-items:center; }
+  .tip-i { width:13px; height:13px; border-radius:50%; background:var(--bg); border:1px solid var(--bd); color:var(--muted); font-size:9px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; cursor:help; margin-left:3px; }
+  .tip-box { display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 6px); background:#1a1d23; color:#fff; font-size:11px; padding:7px 10px; border-radius:6px; white-space:nowrap; z-index:500; pointer-events:none; line-height:1.6; }
+  .tip:hover .tip-box { display:block; }
+
+  /* 결과 바 */
+  .result-bar { display:flex; align-items:center; justify-content:space-between; padding:4px 0; margin-bottom:6px; }
+  .rb-left { display:flex; align-items:center; gap:7px; flex-wrap:wrap; flex:1; min-width:0; }
+  .rb-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .rb-count { font-size:13px; color:var(--sub); white-space:nowrap; }
+  .rb-count strong { color:var(--text); font-weight:700; }
+  .rb-tag { font-size:12px; background:#fff; border:1px solid var(--bd); padding:3px 10px; border-radius:20px; color:var(--sub); display:flex; align-items:center; gap:4px; white-space:nowrap; }
+  .rb-tag em { color:var(--brand); font-style:normal; font-weight:600; }
+  .rb-note { font-size:11px; color:var(--muted); white-space:nowrap; }
+  .rb-actions { display:flex; align-items:center; gap:6px; }
+  .btn-reset-sm { display:flex; align-items:center; gap:4px; background:transparent; color:var(--sub); border:1px solid var(--bd); border-radius:6px; font-family:inherit; font-size:11px; font-weight:500; padding:5px 10px; cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .btn-reset-sm:hover { background:var(--bg); color:var(--text); }
+  .btn-search-sm { display:flex; align-items:center; gap:5px; background:var(--brand); color:#fff; border:none; border-radius:6px; font-family:inherit; font-size:12px; font-weight:600; padding:6px 16px; cursor:pointer; transition:background .15s; white-space:nowrap; }
+  .btn-search-sm:hover { background:var(--brand-h); }
+
+  /* ══ 테이블 ══ */
+  .table-wrap {
+    background:#fff; border:1px solid var(--bd);
+    border-radius:10px; box-shadow:var(--sh);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .table-top { display:flex; align-items:center; padding:10px 16px; border-bottom:1px solid var(--bd); background:#fafbfc; flex-shrink:0; }
+  .t-tab { padding:4px 14px; font-size:13px; font-weight:600; border-bottom:2px solid transparent; cursor:pointer; color:var(--sub); transition:all .15s; }
+  .t-tab.active { color:var(--brand); border-bottom-color:var(--brand); }
+
+  /* 핵심: 가로+세로 동시 스크롤 */
+  .table-scroll {
+    overflow: auto;
+    height: 380px;
+    width: 100%;
+    border-radius: 0 0 10px 10px;
+  }
+
+  table { border-collapse:collapse; white-space:nowrap; }
+
+  /* 헤더 고정 — 컬럼명 행(2번째 행): top을 상위그룹 행 높이만큼 내림 */
+  thead tr:nth-child(1) th {
+    position:sticky; top:0; z-index:31;
+    background:#1D4ED8; color:#fff;
+    padding:5px 10px; text-align:center;
+    font-size:10px; font-weight:700; letter-spacing:.3px;
+    border-right:1px solid rgba(255,255,255,.2);
+    cursor:default; user-select:none;
+  }
+  thead tr:nth-child(1) th:hover { background:#1D4ED8; } /* hover 효과 없음 */
+
+  /* 컬럼명 행: 상위그룹 높이(29px) 아래로 sticky */
+  thead tr:nth-child(2) th {
+    position:sticky; top:29px; z-index:30;
+    background:#f0f4ff; border-bottom:1px solid var(--bd);
+    padding:6px 10px; text-align:center;
+    font-size:11px; font-weight:600; color:var(--sub);
+    cursor:pointer; user-select:none;
+    border-right:1px solid var(--bd);
+  }
+  thead tr:nth-child(2) th:hover { background:#e8eeff; }
+
+  .si { opacity:.4; font-size:10px; margin-left:2px; }
+
+  /* 세금계산서(향후추가) 헤더 색상 */
+  .th-future { color:#fca5a5 !important; }
+
+  /* 왼쪽 고정 컬럼 — 일반 tbody */
+  .col-fix {
+    position:sticky; z-index:20;
+    background:var(--fix-bg);
+    /* ③ 고정 컬럼 폰트 블랙 */
+    color: #1a1d23 !important;
+    font-weight: 500;
+  }
+  /* 상위그룹 행 고정 컬럼 */
+  thead tr:nth-child(1) th.col-fix {
+    z-index:52; background:#1746b0;
+    color:#fff !important;
+  }
+  /* 컬럼명 행 고정 컬럼 */
+  thead tr:nth-child(2) th.col-fix {
+    z-index:41; background:#dce8ff;
+    color: #1a1d23 !important;
+    font-weight: 700;
+  }
+
+  /* 고정 컬럼 left 값 */
+  .cf0 { left:0; min-width:72px; max-width:72px; }
+  .cf1 { left:72px; min-width:110px; max-width:110px; }
+  .cf2 { left:182px; min-width:100px; max-width:100px; }
+  .cf3 { left:282px; min-width:100px; max-width:100px; }
+  .cf4 { left:382px; min-width:70px; max-width:70px; }
+  .cf5 { left:452px; min-width:68px; max-width:68px; }
+  .cf6 { left:520px; min-width:90px; max-width:90px; }
+  .cf7 { left:610px; min-width:120px; max-width:120px; border-right:2px solid #93C5FD !important; }
+
+  /* 일반 컬럼 */
+  tbody td {
+    padding:7px 10px; font-size:12px;
+    border-right:1px solid #f0f2f5;
+    border-bottom:1px solid #f0f2f5;
+    text-align:right;
+    color:var(--text);
+  }
+  td.tc { text-align:center; }
+  td.tl { text-align:left; }
+  .tn-red { color:var(--brand); font-weight:600; }
+  .badge { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:4px; font-size:10px; font-weight:700; }
+  .bn { background:#f0f2f5; color:var(--sub); }
+  .by { background:var(--brand-lt); color:var(--brand); }
+
+  /* 합계 행 */
+  .tr-total td { background:#f8f9fb; font-weight:700; font-size:12px; border-bottom:2px solid var(--bd); }
+  .tr-total td.col-fix { background:#e4ecff; }
+
+  /* 데이터 행 hover — 고정컬럼 hover 없음(③) */
+  tbody tr:hover td:not(.col-fix) { background:#f5f8ff; }
+
+  .td-link { color:#2563eb; text-decoration:none; }
+  .td-link:hover { text-decoration:underline; }
+
+  /* 향후추가 컬럼 */
+  .future { color:var(--muted); font-style:italic; }
+
+  /* 모달 */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:400; align-items:center; justify-content:center; }
+  .overlay.show { display:flex; }
+  .modal { background:#fff; border-radius:12px; padding:22px 24px; width:340px; box-shadow:var(--sh2); }
+  .modal h3 { font-size:15px; font-weight:700; margin-bottom:4px; }
+  .modal p { font-size:12px; color:var(--sub); margin-bottom:12px; line-height:1.6; }
+  .modal-limit { font-size:11px; color:var(--muted); margin-bottom:12px; padding:6px 10px; background:var(--bg); border-radius:6px; }
+  .modal-limit strong { color:var(--brand); }
+  .modal input { width:100%; border:1px solid var(--bd); border-radius:6px; padding:9px 12px; font-family:inherit; font-size:13px; outline:none; margin-bottom:12px; transition:border-color .15s; }
+  .modal input:focus { border-color:var(--brand); }
+  .modal-preview { background:var(--bg); border-radius:6px; padding:10px 12px; font-size:11px; color:var(--sub); margin-bottom:16px; line-height:1.8; }
+  .modal-preview strong { color:var(--text); display:block; margin-bottom:2px; font-size:12px; }
+  .modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+  .m-cancel { background:none; border:1px solid var(--bd); border-radius:6px; font-family:inherit; font-size:12px; padding:7px 16px; cursor:pointer; }
+  .m-ok { background:var(--brand); color:#fff; border:none; border-radius:6px; font-family:inherit; font-size:12px; font-weight:600; padding:7px 16px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-logo">▶</div>
+    <div class="tb-title">당일실적</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-meta">기준날짜 <strong>2026-04-22</strong> &nbsp;|&nbsp; 기준시간 <strong>08</strong></div>
+    <button class="btn-excel">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      엑셀 다운로드
+    </button>
+    <div class="tb-user">
+      <div class="avatar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <span>사번</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+<div class="filter-panel">
+
+  <!-- 입력 필터 행 -->
+  <div class="row-inputs">
+    <div class="sec-lbl">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      필터
+    </div>
+    <div class="input-fields">
+
+      <div class="fc" style="width:116px">
+        <div class="fc-lbl">팀</div>
+        <div class="sw">
+          <select class="fs" id="sel-team" onchange="onTeamChange()">
+            <option value="">전체</option>
+            <option value="디지털" selected>디지털</option>
+            <option value="무형상품">무형상품</option>
+            <option value="패션">패션</option>
+            <option value="뷰티/헬스">뷰티/헬스</option>
+            <option value="리빙/생활문화">리빙/생활문화</option>
+            <option value="마트">마트</option>
+            <option value="B2B">B2B</option>
+          </select>
+          <svg class="sa" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="fc" style="width:130px">
+        <div class="fc-lbl">관리 카테고리</div>
+        <div class="sw">
+          <select class="fs" id="sel-mcat" onchange="sync()">
+            <option value="">전체</option>
+            <option>컴퓨터</option><option>대형가전</option>
+            <option>계절가전</option><option>렌털/가입 상품</option>
+          </select>
+          <svg class="sa" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="fc" style="width:124px">
+        <div class="fc-lbl">전시카테고리 대분류</div>
+        <div class="sw">
+          <select class="fs" id="sel-lcat" onchange="sync()">
+            <option value="">전체</option>
+            <option>냉장고</option><option>계절가전</option><option>렌털/구독</option>
+          </select>
+          <svg class="sa" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="fc" style="width:116px">
+        <div class="fc-lbl">전시카테고리 중분류</div>
+        <div class="sw">
+          <select class="fs" id="sel-mcat2" onchange="sync()">
+            <option value="">전체</option>
+            <option>양문형 냉장고</option><option>에어컨</option><option>가전렌털</option>
+          </select>
+          <svg class="sa" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="fc" style="width:96px">
+        <div class="fc-lbl">거래유형</div>
+        <div class="sw">
+          <select class="fs" id="sel-deal" onchange="sync()">
+            <option value="">전체</option>
+            <option value="OM" selected>OM</option><option value="Retail">Retail</option>
+          </select>
+          <svg class="sa" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="fc" style="width:90px">
+        <div class="fc-lbl">과금유형</div>
+        <div class="sw">
+          <select class="fs" id="sel-charge-type" onchange="sync()">
+            <option value="">전체</option>
+            <option value="유상">유상</option>
+            <option value="무상">무상</option>
+          </select>
+          <svg class="sa" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="fc" style="width:156px">
+        <div class="fc-lbl">결제거래액 즉차 (범위)</div>
+        <div class="rw">
+          <input class="ri" type="text" placeholder="최소" id="inp-pay-min" oninput="sync()">
+          <span class="rs">~</span>
+          <input class="ri" type="text" placeholder="최대" id="inp-pay-max" oninput="sync()">
+        </div>
+      </div>
+
+      <div class="fc" style="width:156px">
+        <div class="fc-lbl">FC 과금액 (범위) <span class="tip"><span class="tip-i">?</span><span class="tip-box">FC 과금 발생 기준 범위 필터</span></span></div>
+        <div class="rw">
+          <input class="ri" type="text" placeholder="최소" id="inp-fc-min" oninput="sync()">
+          <span class="rs">~</span>
+          <input class="ri" type="text" placeholder="최대" id="inp-fc-max" oninput="sync()">
+        </div>
+      </div>
+
+      <!-- ★ 신규: 총매출율 -->
+      <div class="fc" style="width:140px">
+        <div class="fc-lbl">총매출율 % (범위)</div>
+        <div class="rw">
+          <input class="ri" type="text" placeholder="최소" id="inp-total-rate-min" oninput="sync()">
+          <span class="rs">~</span>
+          <input class="ri" type="text" placeholder="최대" id="inp-total-rate-max" oninput="sync()">
+        </div>
+      </div>
+
+      <!-- ★ 신규: 광고매출율 -->
+      <div class="fc" style="width:140px">
+        <div class="fc-lbl">광고매출율 % (범위)</div>
+        <div class="rw">
+          <input class="ri" type="text" placeholder="최소" id="inp-ad-rate-min" oninput="sync()">
+          <span class="rs">~</span>
+          <input class="ri" type="text" placeholder="최대" id="inp-ad-rate-max" oninput="sync()">
+        </div>
+      </div>
+
+      <!-- ★ 위치변경: 셀러명/번호 맨 마지막 -->
+      <div class="fc" style="width:148px; border-right:none;">
+        <div class="fc-lbl">셀러명 / 셀러번호</div>
+        <input class="fi" type="text" placeholder="2자 이상 입력" id="inp-seller" oninput="sync()">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 토글 태그 행 -->
+  <div class="row-tags">
+    <div class="tag-sec-lbl">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </div>
+    <div class="tag-body">
+      <span class="tag-gl">Y/N 다중선택</span>
+      <button class="tog" data-key="홈탭노출" onclick="toggleTag(this)">홈탭 노출</button>
+      <button class="tog" data-key="MD할인" onclick="toggleTag(this)">MD 할인</button>
+      <button class="tog" data-key="포커스클릭" onclick="toggleTag(this)">포커스클릭</button>
+      <button class="tog" data-key="대형제휴셀러" onclick="toggleTag(this)">대형제휴셀러</button>
+    </div>
+    <div class="tag-actions">
+      <button class="btn-save" onclick="openModal()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        현재 조건 저장
+      </button>
+    </div>
+  </div>
+
+  <!-- 저장된 필터 행 -->
+  <div class="row-saved" id="rowSaved">
+    <span class="sv-lbl">저장된 필터</span>
+    <span class="sv-count" id="svCount"></span>
+    <span class="ls-badge">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      브라우저 저장 (사번별)
+    </span>
+    <span class="tip">
+      <span class="tip-i">?</span>
+      <span class="tip-box" style="white-space:normal;width:220px;text-align:left;line-height:1.7;">최대 5개까지 저장 가능합니다.<br>칩에 마우스를 올리면 저장 조건을 미리 볼 수 있습니다.<br>우측 ✕ 버튼으로 삭제, 클릭하면 즉시 적용·검색됩니다.</span>
+    </span>
+  </div>
+
+</div>
+
+<!-- 결과 바 -->
+<div class="result-bar">
+  <div class="rb-left" id="rbLeft">
+    <div class="rb-count">총 <strong>1,102,141</strong>개 셀러</div>
+  </div>
+  <div class="rb-right">
+    <div class="rb-note">* 셀러명 / 셀러번호 클릭시, 상품정보를 확인할 수 있습니다</div>
+    <div class="rb-actions">
+      <button class="btn-reset-sm" onclick="resetAll()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        초기화
+      </button>
+      <button class="btn-search-sm" onclick="doSearch()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        검색
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 테이블 -->
+<div class="table-wrap">
+  <div class="table-top"><div class="t-tab active">전체</div></div>
+  <div class="table-scroll">
+    <table id="mainTable">
+      <thead>
+        <!-- 상위그룹 행 (sticky top:0) -->
+        <tr>
+          <th colspan="8" class="col-fix cf0" style="left:0;z-index:52;text-align:center;">구분</th>
+          <th colspan="23">거래실적</th>
+          <th colspan="12">포커스클릭</th>
+          <th colspan="9">홈탭 딜카드</th>
+          <th colspan="4">AO정보</th>
+        </tr>
+        <!-- 컬럼명 행 (sticky top:29px) -->
+        <tr>
+          <!-- 고정 8개 -->
+          <th class="col-fix cf0 tc">팀 <span class="si">↕</span></th>
+          <th class="col-fix cf1 tl">관리 Cat <span class="si">↕</span></th>
+          <th class="col-fix cf2 tl">대분류 Cat <span class="si">↕</span></th>
+          <th class="col-fix cf3 tl">중분류 Cat <span class="si">↕</span></th>
+          <th class="col-fix cf4 tc">대형제휴<br>셀러여부 <span class="si">↕</span></th>
+          <th class="col-fix cf5 tc">거래<br>유형 <span class="si">↕</span></th>
+          <th class="col-fix cf6 tc">셀러번호 <span class="si">↕</span></th>
+          <th class="col-fix cf7 tl">셀러명 <span class="si">↕</span></th>
+          <!-- 거래실적 24개 -->
+          <th>총매출액<br>(A+B+C+D) <span class="si">↕</span></th>
+          <th>총매출율 <span class="si">↕</span></th>
+          <th>광고매출액<br>(A+B+C) <span class="si">↕</span></th>
+          <th>광고매출율 <span class="si">↕</span></th>
+          <th>A. 포커스클릭<br>매출액 <span class="si">↕</span></th>
+          <th>포커스클릭<br>매출율 <span class="si">↕</span></th>
+          <th>포커스클릭<br>(유상) 매출액 <span class="si">↕</span></th>
+          <th>포커스클릭<br>(무상) 매출액 <span class="si">↕</span></th>
+          <th>B. 홈탭딜카드<br>매출액 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>매출율 <span class="si">↕</span></th>
+          <th class="th-future">C. 세금계산서<br>매출액 (향후추가) <span class="si">↕</span></th>
+          <th class="th-future">세금계산서<br>매출율 (향후추가) <span class="si">↕</span></th>
+          <th>D. 순매출액 <span class="si">↕</span></th>
+          <th>순매출율 <span class="si">↕</span></th>
+          <th>결제 거래액<br>(즉차) <span class="si">↕</span></th>
+          <th>거래<br>셀러수 <span class="si">↕</span></th>
+          <th>거래셀러중,<br>포커스클릭 과금셀러수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>과금셀러율 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>과금셀러수 <span class="si">↕</span></th>
+          <th>결제<br>상품수 <span class="si">↕</span></th>
+          <th>결제건수 <span class="si">↕</span></th>
+          <th>결제<br>MD할인액 <span class="si">↕</span></th>
+          <th>결제<br>MD할인율 <span class="si">↕</span></th>
+          <!-- 포커스클릭 12개 -->
+          <th>거래<br>상품수 <span class="si">↕</span></th>
+          <th>전시<br>상품수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>On 상품수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>노출 상품수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>과금 상품수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>노출수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>유효 클릭수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>CTR <span class="si">↕</span></th>
+          <th>포커스클릭<br>전환수 <span class="si">↕</span></th>
+          <th>포커스클릭<br>전환거래액 <span class="si">↕</span></th>
+          <th>포커스클릭<br>CVR <span class="si">↕</span></th>
+          <th>ROAS <span class="si">↕</span></th>
+          <!-- 홈탭딜카드 9개 -->
+          <th>홈탭딜카드<br>On 상품수 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>과금 상품수 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>노출수 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>유효 클릭수 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>CTR <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>전환수 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>CVR <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>전환거래액 <span class="si">↕</span></th>
+          <th>홈탭딜카드<br>ROAS <span class="si">↕</span></th>
+          <!-- AO정보 4개 -->
+          <th>캐시잔액 <span class="si">↕</span></th>
+          <th>포인트잔액 <span class="si">↕</span></th>
+          <th>마이너스<br>캐시 <span class="si">↕</span></th>
+          <th>대행사<br>이용여부 <span class="si">↕</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 합계 행 (총 57컬럼) -->
+        <tr class="tr-total">
+          <td class="col-fix cf0 tc">합계</td>
+          <td class="col-fix cf1 tl">-</td><td class="col-fix cf2 tl">-</td><td class="col-fix cf3 tl">-</td>
+          <td class="col-fix cf4 tc">-</td><td class="col-fix cf5 tc">-</td><td class="col-fix cf6 tc">-</td><td class="col-fix cf7 tl">-</td>
+          <!-- 거래실적 24 -->
+          <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+          <td>-</td><td>-</td><td class="future">-</td><td class="future">-</td><td>-</td><td>-</td>
+          <td>13,937,169</td><td>-</td><td>50,509</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+          <!-- 포커스클릭 12 -->
+          <td>-</td><td>-</td><td>13,937,169</td><td>1,260,462</td><td class="tn-red">50,509</td>
+          <td>42,204,393</td><td>130,751</td><td>0.31%</td><td>-</td><td>-</td><td>-</td><td>320.5%</td>
+          <!-- 홈탭딜카드 9 -->
+          <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>280.2%</td>
+          <!-- AO정보 4 -->
+          <td>-</td><td>-</td><td>-</td><td>-</td>
+        </tr>
+        <!-- 행 생성 매크로: 57컬럼 구조
+             고정8 | 거래실적24 | 포커스클릭12 | 홈탭딜카드9 | AO정보4 -->
+        <!-- 행1 디지털 / 렌털/가입상품 -->
+        <tr>
+          <td class="col-fix cf0 tc">디지털</td><td class="col-fix cf1 tl">렌털/가입 상품</td>
+          <td class="col-fix cf2 tl">렌털/구독 서비스</td><td class="col-fix cf3 tl">가전렌털</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000001</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명AAA</a></td>
+          <td>168,050</td><td>5.2%</td><td>120,000</td><td>3.8%</td><td>80,000</td><td>2.5%</td><td>60,000</td><td>20,000</td>
+          <td>40,000</td><td>1.3%</td><td class="future">-</td><td class="future">-</td><td>50,000</td><td>1.6%</td>
+          <td>168,050</td><td>42</td><td>22</td><td>52.4%</td><td>15</td><td>120</td><td>85</td><td>5,200</td><td>3.1%</td>
+          <td>95</td><td>180</td><td>42</td><td>42</td><td class="tn-red">22</td>
+          <td>52,049</td><td>226</td><td>0.43%</td><td>18</td><td>45,000</td><td>8.0%</td><td>385.2%</td>
+          <td>30</td><td>20</td><td>18,000</td><td>8</td><td>0.40%</td><td>5</td><td>5.0%</td><td>12,000</td><td>312.5%</td>
+          <td>500,000</td><td>120,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행2 디지털 / 대형가전 -->
+        <tr>
+          <td class="col-fix cf0 tc">디지털</td><td class="col-fix cf1 tl">대형가전</td>
+          <td class="col-fix cf2 tl">냉장고</td><td class="col-fix cf3 tl">양문형 냉장고</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000002</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명BBB</a></td>
+          <td>49,600</td><td>4.1%</td><td>38,000</td><td>3.2%</td><td>25,000</td><td>2.1%</td><td>18,000</td><td>7,000</td>
+          <td>13,000</td><td>1.1%</td><td class="future">-</td><td class="future">-</td><td>15,000</td><td>1.2%</td>
+          <td>49,600</td><td>15</td><td>8</td><td>53.3%</td><td>5</td><td>45</td><td>32</td><td>1,800</td><td>3.6%</td>
+          <td>38</td><td>72</td><td>4</td><td>4</td><td class="tn-red">4</td>
+          <td>85,881</td><td>538</td><td>0.63%</td><td>12</td><td>28,000</td><td>2.2%</td><td>298.4%</td>
+          <td>12</td><td>8</td><td>7,200</td><td>3</td><td>0.30%</td><td>2</td><td>3.0%</td><td>4,800</td><td>265.0%</td>
+          <td>280,000</td><td>75,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행3 디지털 / 계절가전 -->
+        <tr>
+          <td class="col-fix cf0 tc">디지털</td><td class="col-fix cf1 tl">계절가전</td>
+          <td class="col-fix cf2 tl">계절가전</td><td class="col-fix cf3 tl">에어컨</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000003</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명CCC</a></td>
+          <td>45,340</td><td>3.8%</td><td>34,000</td><td>2.9%</td><td>22,000</td><td>1.9%</td><td>16,000</td><td>6,000</td>
+          <td>12,000</td><td>1.0%</td><td class="future">-</td><td class="future">-</td><td>14,000</td><td>1.2%</td>
+          <td>45,340</td><td>18</td><td>9</td><td>50.0%</td><td>6</td><td>52</td><td>38</td><td>1,500</td><td>3.3%</td>
+          <td>44</td><td>85</td><td>15</td><td>10</td><td class="tn-red">8</td>
+          <td>47,906</td><td>390</td><td>0.81%</td><td>15</td><td>32,000</td><td>3.8%</td><td>342.1%</td>
+          <td>14</td><td>9</td><td>8,100</td><td>4</td><td>0.40%</td><td>3</td><td>4.0%</td><td>5,400</td><td>288.5%</td>
+          <td>320,000</td><td>88,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행4 마트 / 건강식품 -->
+        <tr>
+          <td class="col-fix cf0 tc">마트</td><td class="col-fix cf1 tl">건강/다이어트식품</td>
+          <td class="col-fix cf2 tl">건강식품</td><td class="col-fix cf3 tl">비타민/미네랄</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000004</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명DDD</a></td>
+          <td>168,050</td><td>4.2%</td><td>125,000</td><td>3.1%</td><td>75,000</td><td>1.9%</td><td>55,000</td><td>20,000</td>
+          <td>50,000</td><td>1.2%</td><td class="future">-</td><td class="future">-</td><td>42,000</td><td>1.0%</td>
+          <td>168,050</td><td>38</td><td>22</td><td>57.9%</td><td>14</td><td>95</td><td>68</td><td>2,800</td><td>2.9%</td>
+          <td>72</td><td>136</td><td>42</td><td>42</td><td class="tn-red">22</td>
+          <td>52,049</td><td>226</td><td>0.43%</td><td>18</td><td>42,000</td><td>8.1%</td><td>405.8%</td>
+          <td>28</td><td>18</td><td>16,200</td><td>7</td><td>0.39%</td><td>5</td><td>4.5%</td><td>10,800</td><td>352.4%</td>
+          <td>420,000</td><td>105,000</td><td>0</td><td class="tc">Y</td>
+        </tr>
+        <!-- 행5 패션 / 여성의류 -->
+        <tr>
+          <td class="col-fix cf0 tc">패션</td><td class="col-fix cf1 tl">여성의류</td>
+          <td class="col-fix cf2 tl">원피스</td><td class="col-fix cf3 tl">미니원피스</td>
+          <td class="col-fix cf4 tc"><span class="badge by">Y</span></td><td class="col-fix cf5 tc">Retail</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000005</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명EEE</a></td>
+          <td>92,300</td><td>6.1%</td><td>71,000</td><td>4.7%</td><td>45,000</td><td>3.0%</td><td>32,000</td><td>13,000</td>
+          <td>26,000</td><td>1.7%</td><td class="future">-</td><td class="future">-</td><td>28,000</td><td>1.9%</td>
+          <td>92,300</td><td>28</td><td>14</td><td>50.0%</td><td>10</td><td>75</td><td>55</td><td>3,100</td><td>3.4%</td>
+          <td>62</td><td>115</td><td>28</td><td>25</td><td class="tn-red">14</td>
+          <td>38,420</td><td>312</td><td>0.81%</td><td>22</td><td>55,000</td><td>5.9%</td><td>418.3%</td>
+          <td>22</td><td>14</td><td>12,600</td><td>6</td><td>0.43%</td><td>4</td><td>4.3%</td><td>8,400</td><td>360.0%</td>
+          <td>380,000</td><td>95,000</td><td>0</td><td class="tc">Y</td>
+        </tr>
+        <!-- 행6 뷰티/헬스 / 스킨케어 -->
+        <tr>
+          <td class="col-fix cf0 tc">뷰티/헬스</td><td class="col-fix cf1 tl">화장품/미용</td>
+          <td class="col-fix cf2 tl">스킨케어</td><td class="col-fix cf3 tl">로션/에멀션</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000006</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명FFF</a></td>
+          <td>75,200</td><td>5.8%</td><td>58,000</td><td>4.5%</td><td>36,000</td><td>2.8%</td><td>26,000</td><td>10,000</td>
+          <td>22,000</td><td>1.7%</td><td class="future">-</td><td class="future">-</td><td>23,000</td><td>1.8%</td>
+          <td>75,200</td><td>22</td><td>11</td><td>50.0%</td><td>8</td><td>60</td><td>45</td><td>2,500</td><td>3.3%</td>
+          <td>50</td><td>95</td><td>22</td><td>20</td><td class="tn-red">11</td>
+          <td>31,500</td><td>258</td><td>0.87%</td><td>18</td><td>44,000</td><td>5.9%</td><td>392.7%</td>
+          <td>18</td><td>11</td><td>9,900</td><td>5</td><td>0.46%</td><td>3</td><td>3.7%</td><td>6,600</td><td>338.2%</td>
+          <td>310,000</td><td>78,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행7 리빙/생활문화 / 소파 -->
+        <tr>
+          <td class="col-fix cf0 tc">리빙/생활문화</td><td class="col-fix cf1 tl">가구/인테리어</td>
+          <td class="col-fix cf2 tl">소파</td><td class="col-fix cf3 tl">패브릭소파</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000007</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명GGG</a></td>
+          <td>63,800</td><td>4.9%</td><td>49,000</td><td>3.8%</td><td>31,000</td><td>2.4%</td><td>22,000</td><td>9,000</td>
+          <td>18,000</td><td>1.4%</td><td class="future">-</td><td class="future">-</td><td>19,000</td><td>1.5%</td>
+          <td>63,800</td><td>19</td><td>9</td><td>47.4%</td><td>7</td><td>50</td><td>38</td><td>2,100</td><td>3.3%</td>
+          <td>42</td><td>80</td><td>19</td><td>17</td><td class="tn-red">9</td>
+          <td>26,800</td><td>218</td><td>0.81%</td><td>15</td><td>37,000</td><td>5.8%</td><td>362.4%</td>
+          <td>15</td><td>9</td><td>8,100</td><td>4</td><td>0.44%</td><td>3</td><td>4.0%</td><td>5,400</td><td>312.0%</td>
+          <td>265,000</td><td>66,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행8 마트 / 탄산음료 -->
+        <tr>
+          <td class="col-fix cf0 tc">마트</td><td class="col-fix cf1 tl">커피/생수/음료</td>
+          <td class="col-fix cf2 tl">탄산음료</td><td class="col-fix cf3 tl">콜라/사이다</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">2P</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000008</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명HHH</a></td>
+          <td>55,400</td><td>4.3%</td><td>43,000</td><td>3.3%</td><td>27,000</td><td>2.1%</td><td>19,000</td><td>8,000</td>
+          <td>16,000</td><td>1.2%</td><td class="future">-</td><td class="future">-</td><td>16,500</td><td>1.3%</td>
+          <td>55,400</td><td>16</td><td>8</td><td>50.0%</td><td>6</td><td>44</td><td>32</td><td>1,800</td><td>3.2%</td>
+          <td>37</td><td>70</td><td>16</td><td>14</td><td class="tn-red">8</td>
+          <td>23,200</td><td>188</td><td>0.85%</td><td>13</td><td>32,000</td><td>5.8%</td><td>348.6%</td>
+          <td>13</td><td>8</td><td>7,200</td><td>4</td><td>0.44%</td><td>3</td><td>4.0%</td><td>4,800</td><td>298.4%</td>
+          <td>228,000</td><td>57,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행9 B2B / 복사용지 -->
+        <tr>
+          <td class="col-fix cf0 tc">B2B</td><td class="col-fix cf1 tl">기업용소모품</td>
+          <td class="col-fix cf2 tl">사무용지</td><td class="col-fix cf3 tl">복사용지</td>
+          <td class="col-fix cf4 tc"><span class="badge by">Y</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000009</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명III</a></td>
+          <td>48,900</td><td>3.8%</td><td>37,000</td><td>2.9%</td><td>23,000</td><td>1.8%</td><td>16,000</td><td>7,000</td>
+          <td>14,000</td><td>1.1%</td><td class="future">-</td><td class="future">-</td><td>14,500</td><td>1.1%</td>
+          <td>48,900</td><td>14</td><td>7</td><td>50.0%</td><td>5</td><td>38</td><td>28</td><td>1,600</td><td>3.3%</td>
+          <td>32</td><td>61</td><td>14</td><td>12</td><td class="tn-red">7</td>
+          <td>20,500</td><td>165</td><td>0.81%</td><td>11</td><td>28,000</td><td>5.7%</td><td>328.5%</td>
+          <td>11</td><td>7</td><td>6,300</td><td>3</td><td>0.41%</td><td>2</td><td>3.6%</td><td>4,200</td><td>282.0%</td>
+          <td>202,000</td><td>50,000</td><td>0</td><td class="tc">Y</td>
+        </tr>
+        <!-- 행10 무형상품 / OTT -->
+        <tr>
+          <td class="col-fix cf0 tc">무형상품</td><td class="col-fix cf1 tl">디지털콘텐츠</td>
+          <td class="col-fix cf2 tl">OTT서비스</td><td class="col-fix cf3 tl">월정액</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">Retail</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000010</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명JJJ</a></td>
+          <td>41,200</td><td>3.2%</td><td>31,000</td><td>2.4%</td><td>19,000</td><td>1.5%</td><td>13,000</td><td>6,000</td>
+          <td>12,000</td><td>0.9%</td><td class="future">-</td><td class="future">-</td><td>12,200</td><td>0.9%</td>
+          <td>41,200</td><td>12</td><td>6</td><td>50.0%</td><td>4</td><td>32</td><td>24</td><td>1,400</td><td>3.4%</td>
+          <td>27</td><td>52</td><td>12</td><td>10</td><td class="tn-red">6</td>
+          <td>17,300</td><td>140</td><td>0.81%</td><td>9</td><td>23,000</td><td>5.6%</td><td>315.2%</td>
+          <td>9</td><td>6</td><td>5,400</td><td>3</td><td>0.41%</td><td>2</td><td>3.5%</td><td>3,600</td><td>272.0%</td>
+          <td>170,000</td><td>42,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행11 디지털 / 컴퓨터 -->
+        <tr>
+          <td class="col-fix cf0 tc">디지털</td><td class="col-fix cf1 tl">컴퓨터</td>
+          <td class="col-fix cf2 tl">PC 주변기기</td><td class="col-fix cf3 tl">모니터</td>
+          <td class="col-fix cf4 tc"><span class="badge by">Y</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000011</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명KKK</a></td>
+          <td>132,400</td><td>6.8%</td><td>98,000</td><td>5.0%</td><td>62,000</td><td>3.2%</td><td>45,000</td><td>17,000</td>
+          <td>36,000</td><td>1.8%</td><td class="future">-</td><td class="future">-</td><td>38,000</td><td>1.9%</td>
+          <td>132,400</td><td>35</td><td>18</td><td>51.4%</td><td>12</td><td>95</td><td>70</td><td>3,800</td><td>4.0%</td>
+          <td>80</td><td>150</td><td>35</td><td>30</td><td class="tn-red">18</td>
+          <td>44,600</td><td>298</td><td>0.67%</td><td>20</td><td>51,000</td><td>7.7%</td><td>428.5%</td>
+          <td>25</td><td>16</td><td>14,400</td><td>7</td><td>0.44%</td><td>4</td><td>4.1%</td><td>9,600</td><td>368.0%</td>
+          <td>445,000</td><td>111,000</td><td>0</td><td class="tc">Y</td>
+        </tr>
+        <!-- 행12 패션 / 남성의류 -->
+        <tr>
+          <td class="col-fix cf0 tc">패션</td><td class="col-fix cf1 tl">남성의류</td>
+          <td class="col-fix cf2 tl">청바지</td><td class="col-fix cf3 tl">슬림핏</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">Retail</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000012</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명LLL</a></td>
+          <td>88,700</td><td>5.5%</td><td>67,000</td><td>4.2%</td><td>42,000</td><td>2.6%</td><td>30,000</td><td>12,000</td>
+          <td>25,000</td><td>1.6%</td><td class="future">-</td><td class="future">-</td><td>26,500</td><td>1.6%</td>
+          <td>88,700</td><td>26</td><td>13</td><td>50.0%</td><td>9</td><td>70</td><td>52</td><td>2,900</td><td>3.3%</td>
+          <td>59</td><td>110</td><td>26</td><td>23</td><td class="tn-red">13</td>
+          <td>36,800</td><td>298</td><td>0.77%</td><td>21</td><td>52,000</td><td>5.9%</td><td>412.0%</td>
+          <td>21</td><td>13</td><td>11,700</td><td>6</td><td>0.42%</td><td>4</td><td>4.1%</td><td>7,800</td><td>355.0%</td>
+          <td>365,000</td><td>91,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행13 뷰티/헬스 / 비타민 -->
+        <tr>
+          <td class="col-fix cf0 tc">뷰티/헬스</td><td class="col-fix cf1 tl">건강/다이어트식품</td>
+          <td class="col-fix cf2 tl">영양제</td><td class="col-fix cf3 tl">비타민C</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000013</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명MMM</a></td>
+          <td>71,500</td><td>5.2%</td><td>54,000</td><td>3.9%</td><td>34,000</td><td>2.5%</td><td>24,000</td><td>10,000</td>
+          <td>20,000</td><td>1.4%</td><td class="future">-</td><td class="future">-</td><td>21,000</td><td>1.5%</td>
+          <td>71,500</td><td>21</td><td>10</td><td>47.6%</td><td>7</td><td>57</td><td>42</td><td>2,300</td><td>3.2%</td>
+          <td>48</td><td>90</td><td>21</td><td>18</td><td class="tn-red">10</td>
+          <td>29,800</td><td>242</td><td>0.85%</td><td>17</td><td>41,000</td><td>5.7%</td><td>378.4%</td>
+          <td>17</td><td>10</td><td>9,000</td><td>5</td><td>0.45%</td><td>3</td><td>3.9%</td><td>6,000</td><td>322.0%</td>
+          <td>295,000</td><td>74,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행14 리빙 / 주방용품 -->
+        <tr>
+          <td class="col-fix cf0 tc">리빙/생활문화</td><td class="col-fix cf1 tl">주방용품</td>
+          <td class="col-fix cf2 tl">냄비/프라이팬</td><td class="col-fix cf3 tl">인덕션냄비</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000014</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명NNN</a></td>
+          <td>59,200</td><td>4.5%</td><td>45,000</td><td>3.4%</td><td>28,000</td><td>2.1%</td><td>20,000</td><td>8,000</td>
+          <td>17,000</td><td>1.3%</td><td class="future">-</td><td class="future">-</td><td>17,500</td><td>1.3%</td>
+          <td>59,200</td><td>17</td><td>8</td><td>47.1%</td><td>6</td><td>47</td><td>35</td><td>1,950</td><td>3.3%</td>
+          <td>39</td><td>75</td><td>17</td><td>15</td><td class="tn-red">8</td>
+          <td>24,700</td><td>200</td><td>0.82%</td><td>14</td><td>34,000</td><td>5.7%</td><td>355.8%</td>
+          <td>14</td><td>8</td><td>7,200</td><td>4</td><td>0.43%</td><td>3</td><td>3.9%</td><td>4,800</td><td>305.0%</td>
+          <td>244,000</td><td>61,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행15 마트 / 과자 -->
+        <tr>
+          <td class="col-fix cf0 tc">마트</td><td class="col-fix cf1 tl">식품/과자</td>
+          <td class="col-fix cf2 tl">과자/스낵</td><td class="col-fix cf3 tl">초콜릿</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">2P</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000015</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명OOO</a></td>
+          <td>38,600</td><td>3.0%</td><td>29,000</td><td>2.2%</td><td>18,000</td><td>1.4%</td><td>12,000</td><td>6,000</td>
+          <td>11,000</td><td>0.8%</td><td class="future">-</td><td class="future">-</td><td>11,400</td><td>0.9%</td>
+          <td>38,600</td><td>11</td><td>5</td><td>45.5%</td><td>4</td><td>30</td><td>22</td><td>1,300</td><td>3.4%</td>
+          <td>25</td><td>48</td><td>11</td><td>9</td><td class="tn-red">5</td>
+          <td>16,100</td><td>130</td><td>0.79%</td><td>8</td><td>21,000</td><td>5.5%</td><td>302.4%</td>
+          <td>8</td><td>5</td><td>4,500</td><td>3</td><td>0.40%</td><td>2</td><td>3.4%</td><td>3,000</td><td>258.0%</td>
+          <td>159,000</td><td>40,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행16 디지털 / 노트북 -->
+        <tr>
+          <td class="col-fix cf0 tc">디지털</td><td class="col-fix cf1 tl">컴퓨터</td>
+          <td class="col-fix cf2 tl">노트북</td><td class="col-fix cf3 tl">게이밍 노트북</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000016</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명PPP</a></td>
+          <td>115,800</td><td>7.2%</td><td>88,000</td><td>5.5%</td><td>56,000</td><td>3.5%</td><td>40,000</td><td>16,000</td>
+          <td>32,000</td><td>2.0%</td><td class="future">-</td><td class="future">-</td><td>34,500</td><td>2.1%</td>
+          <td>115,800</td><td>32</td><td>16</td><td>50.0%</td><td>11</td><td>88</td><td>65</td><td>3,500</td><td>3.9%</td>
+          <td>74</td><td>140</td><td>32</td><td>28</td><td class="tn-red">16</td>
+          <td>41,200</td><td>278</td><td>0.72%</td><td>19</td><td>48,000</td><td>7.5%</td><td>442.0%</td>
+          <td>23</td><td>15</td><td>13,500</td><td>7</td><td>0.43%</td><td>4</td><td>4.2%</td><td>9,000</td><td>382.0%</td>
+          <td>412,000</td><td>103,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행17 패션 / 스포츠 -->
+        <tr>
+          <td class="col-fix cf0 tc">패션</td><td class="col-fix cf1 tl">스포츠/레저</td>
+          <td class="col-fix cf2 tl">운동화</td><td class="col-fix cf3 tl">러닝화</td>
+          <td class="col-fix cf4 tc"><span class="badge by">Y</span></td><td class="col-fix cf5 tc">Retail</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000017</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명QQQ</a></td>
+          <td>82,400</td><td>5.8%</td><td>63,000</td><td>4.4%</td><td>39,000</td><td>2.7%</td><td>28,000</td><td>11,000</td>
+          <td>24,000</td><td>1.7%</td><td class="future">-</td><td class="future">-</td><td>25,200</td><td>1.8%</td>
+          <td>82,400</td><td>24</td><td>12</td><td>50.0%</td><td>9</td><td>66</td><td>49</td><td>2,750</td><td>3.3%</td>
+          <td>56</td><td>105</td><td>24</td><td>21</td><td class="tn-red">12</td>
+          <td>34,500</td><td>280</td><td>0.79%</td><td>20</td><td>49,000</td><td>6.0%</td><td>406.5%</td>
+          <td>20</td><td>12</td><td>10,800</td><td>5</td><td>0.42%</td><td>4</td><td>4.0%</td><td>7,200</td><td>348.0%</td>
+          <td>342,000</td><td>85,000</td><td>0</td><td class="tc">Y</td>
+        </tr>
+        <!-- 행18 뷰티/헬스 / 향수 -->
+        <tr>
+          <td class="col-fix cf0 tc">뷰티/헬스</td><td class="col-fix cf1 tl">화장품/미용</td>
+          <td class="col-fix cf2 tl">향수/방향제</td><td class="col-fix cf3 tl">여성향수</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000018</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명RRR</a></td>
+          <td>66,800</td><td>5.0%</td><td>51,000</td><td>3.8%</td><td>32,000</td><td>2.4%</td><td>23,000</td><td>9,000</td>
+          <td>19,000</td><td>1.4%</td><td class="future">-</td><td class="future">-</td><td>19,900</td><td>1.5%</td>
+          <td>66,800</td><td>20</td><td>10</td><td>50.0%</td><td>7</td><td>54</td><td>40</td><td>2,200</td><td>3.3%</td>
+          <td>46</td><td>87</td><td>20</td><td>17</td><td class="tn-red">10</td>
+          <td>28,100</td><td>228</td><td>0.83%</td><td>16</td><td>39,000</td><td>5.8%</td><td>368.4%</td>
+          <td>16</td><td>10</td><td>9,000</td><td>5</td><td>0.45%</td><td>3</td><td>3.8%</td><td>6,000</td><td>315.0%</td>
+          <td>278,000</td><td>69,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행19 마트 / 유제품 -->
+        <tr>
+          <td class="col-fix cf0 tc">마트</td><td class="col-fix cf1 tl">커피/생수/음료</td>
+          <td class="col-fix cf2 tl">유유/유제품</td><td class="col-fix cf3 tl">요구르트/요거트</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">2P</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000019</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명SSS</a></td>
+          <td>44,200</td><td>3.4%</td><td>33,000</td><td>2.5%</td><td>21,000</td><td>1.6%</td><td>14,500</td><td>6,500</td>
+          <td>12,000</td><td>0.9%</td><td class="future">-</td><td class="future">-</td><td>13,100</td><td>1.0%</td>
+          <td>44,200</td><td>13</td><td>6</td><td>46.2%</td><td>4</td><td>35</td><td>26</td><td>1,480</td><td>3.4%</td>
+          <td>30</td><td>56</td><td>13</td><td>11</td><td class="tn-red">6</td>
+          <td>18,500</td><td>150</td><td>0.82%</td><td>10</td><td>25,000</td><td>5.7%</td><td>322.0%</td>
+          <td>10</td><td>6</td><td>5,400</td><td>3</td><td>0.42%</td><td>2</td><td>3.6%</td><td>3,600</td><td>278.0%</td>
+          <td>185,000</td><td>46,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행20 디지털 / 스마트폰 -->
+        <tr>
+          <td class="col-fix cf0 tc">디지털</td><td class="col-fix cf1 tl">컴퓨터</td>
+          <td class="col-fix cf2 tl">태블릿/스마트폰</td><td class="col-fix cf3 tl">안드로이드폰</td>
+          <td class="col-fix cf4 tc"><span class="badge by">Y</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000020</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명TTT</a></td>
+          <td>142,500</td><td>7.5%</td><td>108,000</td><td>5.7%</td><td>68,000</td><td>3.6%</td><td>50,000</td><td>18,000</td>
+          <td>40,000</td><td>2.1%</td><td class="future">-</td><td class="future">-</td><td>42,800</td><td>2.2%</td>
+          <td>142,500</td><td>38</td><td>19</td><td>50.0%</td><td>13</td><td>102</td><td>75</td><td>4,100</td><td>4.0%</td>
+          <td>86</td><td>162</td><td>38</td><td>32</td><td class="tn-red">19</td>
+          <td>47,800</td><td>318</td><td>0.68%</td><td>21</td><td>55,000</td><td>7.8%</td><td>452.3%</td>
+          <td>27</td><td>17</td><td>15,300</td><td>8</td><td>0.44%</td><td>5</td><td>4.3%</td><td>10,200</td><td>392.0%</td>
+          <td>485,000</td><td>121,000</td><td>0</td><td class="tc">Y</td>
+        </tr>
+        <!-- 행21 리빙 / 침구 -->
+        <tr>
+          <td class="col-fix cf0 tc">리빙/생활문화</td><td class="col-fix cf1 tl">생활용품</td>
+          <td class="col-fix cf2 tl">침구</td><td class="col-fix cf3 tl">이불/패드</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000021</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명UUU</a></td>
+          <td>52,600</td><td>4.1%</td><td>40,000</td><td>3.1%</td><td>25,000</td><td>1.9%</td><td>18,000</td><td>7,000</td>
+          <td>15,000</td><td>1.2%</td><td class="future">-</td><td class="future">-</td><td>15,700</td><td>1.2%</td>
+          <td>52,600</td><td>15</td><td>7</td><td>46.7%</td><td>5</td><td>42</td><td>31</td><td>1,720</td><td>3.3%</td>
+          <td>35</td><td>67</td><td>15</td><td>13</td><td class="tn-red">7</td>
+          <td>22,000</td><td>178</td><td>0.83%</td><td>12</td><td>30,000</td><td>5.7%</td><td>338.5%</td>
+          <td>12</td><td>7</td><td>6,300</td><td>3</td><td>0.42%</td><td>2</td><td>3.7%</td><td>4,200</td><td>292.0%</td>
+          <td>218,000</td><td>54,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행22 무형상품 / 통신 -->
+        <tr>
+          <td class="col-fix cf0 tc">무형상품</td><td class="col-fix cf1 tl">통신/생활서비스</td>
+          <td class="col-fix cf2 tl">통신요금제</td><td class="col-fix cf3 tl">알뜰폰요금제</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">Retail</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000022</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명VVV</a></td>
+          <td>36,800</td><td>2.9%</td><td>28,000</td><td>2.2%</td><td>17,500</td><td>1.4%</td><td>12,000</td><td>5,500</td>
+          <td>10,500</td><td>0.8%</td><td class="future">-</td><td class="future">-</td><td>10,900</td><td>0.9%</td>
+          <td>36,800</td><td>11</td><td>5</td><td>45.5%</td><td>4</td><td>29</td><td>21</td><td>1,250</td><td>3.4%</td>
+          <td>24</td><td>46</td><td>11</td><td>9</td><td class="tn-red">5</td>
+          <td>15,400</td><td>124</td><td>0.80%</td><td>8</td><td>20,000</td><td>5.5%</td><td>295.8%</td>
+          <td>8</td><td>5</td><td>4,500</td><td>3</td><td>0.40%</td><td>2</td><td>3.5%</td><td>3,000</td><td>255.0%</td>
+          <td>152,000</td><td>38,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행23 B2B / 사무용품 -->
+        <tr>
+          <td class="col-fix cf0 tc">B2B</td><td class="col-fix cf1 tl">사무용품</td>
+          <td class="col-fix cf2 tl">필기구</td><td class="col-fix cf3 tl">볼펜/만년필</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000023</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명WWW</a></td>
+          <td>34,100</td><td>2.7%</td><td>26,000</td><td>2.0%</td><td>16,200</td><td>1.3%</td><td>11,000</td><td>5,200</td>
+          <td>9,800</td><td>0.8%</td><td class="future">-</td><td class="future">-</td><td>10,100</td><td>0.8%</td>
+          <td>34,100</td><td>10</td><td>5</td><td>50.0%</td><td>3</td><td>27</td><td>20</td><td>1,150</td><td>3.4%</td>
+          <td>22</td><td>42</td><td>10</td><td>8</td><td class="tn-red">5</td>
+          <td>14,300</td><td>115</td><td>0.80%</td><td>7</td><td>18,500</td><td>5.4%</td><td>285.2%</td>
+          <td>7</td><td>4</td><td>3,600</td><td>2</td><td>0.39%</td><td>2</td><td>3.4%</td><td>2,400</td><td>242.0%</td>
+          <td>142,000</td><td>35,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행24 마트 / 생수 -->
+        <tr>
+          <td class="col-fix cf0 tc">마트</td><td class="col-fix cf1 tl">커피/생수/음료</td>
+          <td class="col-fix cf2 tl">생수/탄산수</td><td class="col-fix cf3 tl">제주용암수</td>
+          <td class="col-fix cf4 tc"><span class="badge bn">N</span></td><td class="col-fix cf5 tc">2P</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000024</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명XXX</a></td>
+          <td>31,500</td><td>2.5%</td><td>24,000</td><td>1.9%</td><td>15,000</td><td>1.2%</td><td>10,500</td><td>4,500</td>
+          <td>9,000</td><td>0.7%</td><td class="future">-</td><td class="future">-</td><td>9,400</td><td>0.7%</td>
+          <td>31,500</td><td>9</td><td>4</td><td>44.4%</td><td>3</td><td>25</td><td>18</td><td>1,050</td><td>3.3%</td>
+          <td>20</td><td>38</td><td>9</td><td>7</td><td class="tn-red">4</td>
+          <td>13,200</td><td>107</td><td>0.79%</td><td>6</td><td>17,000</td><td>5.4%</td><td>275.4%</td>
+          <td>6</td><td>4</td><td>3,600</td><td>2</td><td>0.40%</td><td>2</td><td>3.3%</td><td>2,400</td><td>235.0%</td>
+          <td>130,000</td><td>32,000</td><td>0</td><td class="tc">N</td>
+        </tr>
+        <!-- 행25 디지털 / TV -->
+        <tr>
+          <td class="col-fix cf0 tc">디지털</td><td class="col-fix cf1 tl">대형가전</td>
+          <td class="col-fix cf2 tl">TV</td><td class="col-fix cf3 tl">OLED TV</td>
+          <td class="col-fix cf4 tc"><span class="badge by">Y</span></td><td class="col-fix cf5 tc">OM</td>
+          <td class="col-fix cf6 tc"><a class="td-link" href="#">S1000025</a></td><td class="col-fix cf7 tl"><a class="td-link" href="#">셀러명YYY</a></td>
+          <td>185,600</td><td>8.2%</td><td>142,000</td><td>6.3%</td><td>90,000</td><td>4.0%</td><td>65,000</td><td>25,000</td>
+          <td>52,000</td><td>2.3%</td><td class="future">-</td><td class="future">-</td><td>55,800</td><td>2.5%</td>
+          <td>185,600</td><td>48</td><td>24</td><td>50.0%</td><td>16</td><td>128</td><td>94</td><td>5,050</td><td>3.9%</td>
+          <td>108</td><td>202</td><td>48</td><td>40</td><td class="tn-red">24</td>
+          <td>60,500</td><td>398</td><td>0.66%</td><td>25</td><td>68,000</td><td>7.8%</td><td>468.5%</td>
+          <td>34</td><td>21</td><td>18,900</td><td>9</td><td>0.44%</td><td>6</td><td>4.4%</td><td>12,600</td><td>408.0%</td>
+          <td>558,000</td><td>139,000</td><td>0</td><td class="tc">Y</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<!-- 저장 모달 -->
+<div class="overlay" id="saveModal" onclick="closeModal(event)">
+  <div class="modal">
+    <h3>현재 필터 조건 저장</h3>
+    <p>이름을 입력하면 저장된 필터 행에 추가됩니다.<br>클릭 한 번으로 즉시 재적용·검색됩니다.</p>
+    <div class="modal-limit" id="modalLimit"></div>
+    <input id="presetName" type="text" placeholder="예: 디지털 OM 과금 점검" maxlength="20">
+    <div class="modal-preview" id="modalPreview"><strong>저장될 조건</strong></div>
+    <div class="modal-btns">
+      <button class="m-cancel" onclick="closeModal()">취소</button>
+      <button class="m-ok" onclick="savePreset()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MAX=5, EID="1102141", KEY=`adFilter_v5_${EID}`;
+const tags=new Set();
+const SYS=[{name:'⭐ 디지털 OM 기본',system:true,data:{team:'디지털',deal:'OM'},summary:'팀: 디지털 / 거래유형: OM'}];
+
+// 팀별 카테고리 Cascading 데이터
+const TEAM_CATS = {
+  '디지털':    ['컴퓨터','대형가전','계절가전','렌털/가입 상품'],
+  '무형상품':  ['디지털콘텐츠','통신/생활서비스'],
+  '패션':      ['여성의류','남성의류','스포츠/레저','잡화'],
+  '뷰티/헬스': ['화장품/미용','건강/다이어트식품'],
+  '리빙/생활문화':['가구/인테리어','주방용품','생활용품'],
+  '마트':      ['커피/생수/음료','건강/다이어트식품','식품/과자'],
+  'B2B':       ['기업용소모품','사무용품'],
+};
+
+window.onload=()=>{ sync(); renderSaved(); };
+
+function onTeamChange() {
+  const team = document.getElementById('sel-team').value;
+  const mcat = document.getElementById('sel-mcat');
+  mcat.innerHTML = '<option value="">전체</option>';
+  if (team && TEAM_CATS[team]) {
+    TEAM_CATS[team].forEach(cat => {
+      const o = document.createElement('option');
+      o.value = cat; o.textContent = cat;
+      mcat.appendChild(o);
+    });
+  } else {
+    // 전체: 모든 카테고리
+    ['컴퓨터','대형가전','계절가전','렌털/가입 상품','여성의류','남성의류','커피/생수/음료','건강/다이어트식품'].forEach(cat => {
+      const o = document.createElement('option');
+      o.value = cat; o.textContent = cat;
+      mcat.appendChild(o);
+    });
+  }
+  // 대분류/중분류 초기화
+  document.getElementById('sel-lcat').innerHTML = '<option value="">전체</option>';
+  document.getElementById('sel-mcat2').innerHTML = '<option value="">전체</option>';
+  sync();
+}
+
+function toggleTag(el) {
+  const k=el.dataset.key;
+  el.classList.toggle('on');
+  tags.has(k)?tags.delete(k):tags.add(k);
+  sync();
+}
+
+const g=id=>document.getElementById(id)?.value||'';
+
+function readFilters() {
+  return {
+    team:g('sel-team'),mcat:g('sel-mcat'),lcat:g('sel-lcat'),
+    mcat2:g('sel-mcat2'),deal:g('sel-deal'),chargeType:g('sel-charge-type'),
+    seller:g('inp-seller').trim(),
+    payMin:g('inp-pay-min'),payMax:g('inp-pay-max'),
+    fcMin:g('inp-fc-min'),fcMax:g('inp-fc-max'),
+    totalRateMin:g('inp-total-rate-min'),totalRateMax:g('inp-total-rate-max'),
+    adRateMin:g('inp-ad-rate-min'),adRateMax:g('inp-ad-rate-max'),
+    qf:[...tags]
+  };
+}
+
+function summarize(d) {
+  const p=[];
+  if(d.team)       p.push(`팀: ${d.team}`);
+  if(d.mcat)       p.push(`관리Cat: ${d.mcat}`);
+  if(d.lcat)       p.push(`대분류: ${d.lcat}`);
+  if(d.mcat2)      p.push(`중분류: ${d.mcat2}`);
+  if(d.deal)       p.push(`거래유형: ${d.deal}`);
+  if(d.chargeType) p.push(`과금: ${d.chargeType}`);
+  if(d.seller&&d.seller.length>=2) p.push(`셀러: ${d.seller}`);
+  if(d.payMin||d.payMax) p.push(`결제금액: ${d.payMin||'*'}~${d.payMax||'*'}`);
+  if(d.fcMin||d.fcMax)   p.push(`FC과금액: ${d.fcMin||'*'}~${d.fcMax||'*'}`);
+  if(d.totalRateMin||d.totalRateMax) p.push(`총매출율: ${d.totalRateMin||'*'}~${d.totalRateMax||'*'}%`);
+  if(d.adRateMin||d.adRateMax)      p.push(`광고매출율: ${d.adRateMin||'*'}~${d.adRateMax||'*'}%`);
+  if(d.qf&&d.qf.length) p.push(...d.qf);
+  return p.length?p.join(' / '):'조건 없음';
+}
+
+function sync() {
+  const d=readFilters();
+  const rbLeft=document.getElementById('rbLeft');
+  const cnt=rbLeft.querySelector('.rb-count');
+  rbLeft.innerHTML=''; rbLeft.appendChild(cnt);
+  summarize(d).split(' / ').filter(s=>s!=='조건 없음').forEach(label=>{
+    const t=document.createElement('div');
+    t.className='rb-tag'; t.innerHTML=`<em>${label}</em>`;
+    rbLeft.appendChild(t);
+  });
+}
+
+function doSearch() {
+  sync();
+  const btn=document.querySelector('.btn-search-sm');
+  if(btn){
+    const orig=btn.innerHTML;
+    btn.style.background='#16a34a';
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 검색됨`;
+    setTimeout(()=>{ btn.style.background=''; btn.innerHTML=orig; },1200);
+  }
+}
+
+function resetAll() {
+  ['sel-team','sel-mcat','sel-lcat','sel-mcat2','sel-deal','sel-charge-type'].forEach(id=>document.getElementById(id).value='');
+  ['inp-seller','inp-pay-min','inp-pay-max','inp-fc-min','inp-fc-max','inp-total-rate-min','inp-total-rate-max','inp-ad-rate-min','inp-ad-rate-max'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.tog').forEach(b=>b.classList.remove('on'));
+  tags.clear(); onTeamChange(); sync();
+}
+
+function getP(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch{return[];}}
+function saveP(a){localStorage.setItem(KEY,JSON.stringify(a));}
+
+function renderSaved() {
+  const row=document.getElementById('rowSaved');
+  const fixed=Array.from(row.children).slice(0,4);
+  row.innerHTML=''; fixed.forEach(el=>row.appendChild(el));
+  const user=getP();
+  const el=document.getElementById('svCount');
+  if(el) el.textContent=`(${SYS.length+user.length}/${SYS.length+MAX})`;
+  [...SYS.map(p=>({...p,deletable:false})),...user.map((p,i)=>({...p,deletable:true,userIdx:i}))].forEach(p=>{
+    const chip=document.createElement('div');
+    chip.className='sv-chip';
+    const sum=p.summary||summarize(p.data||p);
+    chip.innerHTML=`<div class="sv-tip">${sum.split(' / ').join('<br>')}</div><span class="sv-chip-name">${p.name}</span>${p.deletable?`<button class="sv-del" onclick="event.stopPropagation();delP(${p.userIdx})">✕</button>`:''}`;
+    chip.onclick=()=>loadP(p.data||p);
+    row.appendChild(chip);
+  });
+}
+
+function loadP(d) {
+  resetAll();
+  const set=(id,v)=>{if(v)document.getElementById(id).value=v;};
+  set('sel-team',d.team); if(d.team){onTeamChange(); setTimeout(()=>set('sel-mcat',d.mcat),50);}
+  set('sel-lcat',d.lcat); set('sel-mcat2',d.mcat2); set('sel-deal',d.deal);
+  set('sel-charge-type',d.chargeType); set('inp-seller',d.seller);
+  set('inp-pay-min',d.payMin); set('inp-pay-max',d.payMax);
+  set('inp-fc-min',d.fcMin); set('inp-fc-max',d.fcMax);
+  set('inp-total-rate-min',d.totalRateMin); set('inp-total-rate-max',d.totalRateMax);
+  set('inp-ad-rate-min',d.adRateMin); set('inp-ad-rate-max',d.adRateMax);
+  if(d.qf) d.qf.forEach(k=>{tags.add(k);document.querySelectorAll('.tog').forEach(b=>{if(b.dataset.key===k)b.classList.add('on');});});
+  sync(); doSearch();
+}
+
+function delP(idx){
+  const arr=getP();
+  if(!confirm(`"${arr[idx]?.name}" 필터를 삭제하시겠습니까?`))return;
+  arr.splice(idx,1);saveP(arr);renderSaved();
+}
+
+function openModal(){
+  const user=getP(),remain=MAX-user.length;
+  document.getElementById('modalLimit').innerHTML=remain>0?`현재 <strong>${user.length}/${MAX}</strong>개 저장됨 — <strong style="color:#16a34a">${remain}개</strong> 더 저장 가능`:`저장 한도(<strong>${MAX}개</strong>)에 도달했습니다.`;
+  document.getElementById('modalPreview').innerHTML='<strong>저장될 조건</strong>'+summarize(readFilters()).split(' / ').map(l=>`<br>· ${l}`).join('');
+  document.getElementById('saveModal').classList.add('show');
+}
+function closeModal(e){if(!e||e.target===document.getElementById('saveModal'))document.getElementById('saveModal').classList.remove('show');}
+function savePreset(){
+  const name=document.getElementById('presetName').value.trim();
+  if(!name){alert('이름을 입력해주세요.');return;}
+  const arr=getP();
+  if(arr.length>=MAX){alert(`최대 ${MAX}개까지 저장 가능합니다.`);return;}
+  const d=readFilters();
+  arr.push({name,summary:summarize(d),...d,created_at:new Date().toISOString()});
+  saveP(arr);renderSaved();
+  document.getElementById('presetName').value='';
+  closeModal();
+}
+</script>
+</body>
+</html>
